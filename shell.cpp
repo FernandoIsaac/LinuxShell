@@ -16,7 +16,9 @@
 
 using namespace std;
 void shell_loop();
+char ** shell_split_pipeParams(char *);
 char **shell_split_line(char*);
+int shell_execute_pipe(char **,char**);
 int shell_execute(char **);
 int shell_launch(char **);
 int shell_num_builtins();
@@ -47,7 +49,8 @@ int (*builtin_func[])(char**) = {
     &shell_help,
     &shell_exit
 };
-
+int num_params = 0;
+int num_tokens = 0;
 int main(int argc, char const *argv[])
 {
     shell_loop();
@@ -56,20 +59,68 @@ int main(int argc, char const *argv[])
 void shell_loop(){
     char *line;
     size_t buffer_size;
-    char **tokens;
+    char **tokens1;
+    char **tokens2;
+    char **params;
     int status;
     do {
         cout << "mi_sh> ";
         line = NULL;
         buffer_size = 0;
         getline(&line, &buffer_size, stdin);//obtiene la linea de comando
-        tokens = shell_split_line(line);
-        status = shell_execute(tokens);
+        
+        params = shell_split_pipeParams(line);
+        for(int i = 0; i < num_params; i = i+2){
+            if(i+1 == num_params){
+                tokens1 = shell_split_line(params[i]);
+                status = shell_execute(tokens1);
+            }else{
+
+                tokens1 = shell_split_line(params[i]);
+                tokens2 = shell_split_line(params[i+1]);
+                
+                status = shell_execute_pipe(tokens1,tokens2);
+                
+            }
+           
+            
+        }
+        //tokens = shell_split_line(line);
+       
+       // status = shell_execute(tokens);
 
         free(line);
-        free(tokens);
+        free(params);
     }while(status);
 }  
+char ** shell_split_pipeParams(char* line){
+    int buffer_size = token_buffer_size;
+    int p_position = 0;
+    char **params = (char **) malloc(buffer_size * sizeof(char *));
+    char *param;
+    if(!params){
+        cout << "Error de asignacion de memoria" << endl;
+        exit(EXIT_FAILURE);
+    } 
+    param = strtok(line, "|");
+    while(param != NULL){
+        
+        params[p_position] = param;
+        p_position++;
+        if(p_position >= buffer_size){
+            buffer_size += token_buffer_size;
+            params = (char **) realloc(NULL, buffer_size * sizeof(char *));
+            if(!params){
+                cout << "Error de asignacion de memoria" << endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+        param = strtok(NULL,"|");
+    }
+    params[p_position] = NULL;
+    num_params = p_position;
+    return params;
+}
 char ** shell_split_line(char* line){
     int buffer_size = token_buffer_size;
     int t_position = 0;
@@ -81,6 +132,7 @@ char ** shell_split_line(char* line){
     }
     token = strtok(line,token_delim);
     while(token != NULL){
+        
         tokens[t_position] = token;
         t_position++;
         if(t_position >= buffer_size){
@@ -123,7 +175,7 @@ int shell_execute(char** tokens){
         if (strcmp(tokens[0], builtin_str[i]) == 0) {
           return (*builtin_func[i])(tokens);
         }
-      }
+    }
 
   return shell_launch(tokens);
 }
@@ -235,4 +287,25 @@ int shell_help(char** tokens){
 }
 int shell_exit(char** tokens){
     return 0 ;
+}
+int shell_execute_pipe(char** tokens1, char** tokens2){
+    int fd[2];
+    pipe(fd);
+    pid_t childpid = fork();
+
+    if(childpid == -1){
+        perror("mi_sh");
+        exit(EXIT_FAILURE);
+    }
+    if(childpid == 0){
+        close(fd[1]);
+        dup(fd[0]);
+        shell_execute(tokens1);
+    }else{
+        close(fd[0]);
+        dup(fd[1]);
+        shell_execute(tokens2);
+
+    }
+    return 1;
 }
