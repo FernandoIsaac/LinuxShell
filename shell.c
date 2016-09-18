@@ -416,11 +416,6 @@ void shell_loop(){
 	 else if (strcmp(cmd, "rmdir") == 0){
 	  char* arg = strtok(0, DELIMS);
 	  if(!arg) fprintf(stderr, "rmdir missing argument.\n");
-	  else rmdir(arg);
-      }
-	else if(strcmp(cmd, "rm") == 0){
-	  char* arg = strtok(0, DELIMS);
-	  if(!arg) fprintf(stderr, "rm missing argument.\n");
 	  else if(strcmp(arg, "-R")==0){
 		char* directory = strtok(0, DELIMS);
 		if(!directory) fprintf(stderr, "rm -R missing argument. \n");
@@ -436,6 +431,11 @@ void shell_loop(){
 			//printf("\n %d", ret);
 		}	
 	  }
+	  else rmdir(arg);
+      }
+	else if(strcmp(cmd, "rm") == 0){
+	  char* arg = strtok(0, DELIMS);
+	  if(!arg) fprintf(stderr, "rm missing argument.\n");
 	  else remove(arg);
 	}
 	else if(strcmp(cmd, "ps")==0){
