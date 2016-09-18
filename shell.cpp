@@ -31,7 +31,7 @@
 #include <pwd.h>
 #include <sys/utsname.h>
 #include <math.h>
-
+#include <signal.h>
 #ifdef _WIN32
 #include <windows.h>
 #define chdir _chdir
@@ -295,7 +295,7 @@ int removedir(char path[500]) {
 
 
 char pathname[MAXPATHLEN];
-char const *builtin_str[] = {"ls", "cd", "mkdir", "chmod", "rmdir", "rm", "cat", "ln", "ps", "help", "exit"};
+char const *builtin_str[] = {"ls", "cd", "mkdir", "chmod", "rmdir", "rm", "cat","uname", "kill", "ln", "ps",  "help", "exit"};
 int (*builtin_func[])(char**) = {
     &shell_ls,
     &shell_cd,
@@ -304,6 +304,8 @@ int (*builtin_func[])(char**) = {
     &shell_rmdir,
     &shell_rm,
     &shell_cat,
+    &shell_uname,
+    &shell_kill,
     &shell_ln,
     &shell_ps,
     &shell_help,
@@ -805,6 +807,21 @@ int shell_uname(char** tokens) {
             printf("%s ", buffer.machine);
             printf("\n");
         }
+    }
+    return 1;
+}
+int shell_kill(char** tokens) {
+    int tokenCount = 0 ;
+    
+    while (tokens[tokenCount] != NULL) {
+        tokenCount++;
+    }
+    tokenCount--;
+    if (tokenCount != 2) {
+        perror("\"kill\" missing arguments\n");
+    } else {
+       
+        kill(atoi(tokens[tokenCount]), 9);
     }
     return 1;
 }
