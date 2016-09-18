@@ -446,12 +446,14 @@ int shell_ls(char** tokens) {
     }
     tokenCount--;
     if (tokenCount == 0) {
+        char cwd[1024];
         char *curr_dir = NULL;
         DIR *dp = NULL;
         struct dirent *dptr = NULL;
         unsigned int count = 0;
 
-        curr_dir = getenv("PWD");
+        curr_dir = getcwd(cwd, sizeof(cwd));
+
         if (curr_dir == NULL) {
             perror("\n ERROR : Could not get the working directory\n");
 
@@ -471,12 +473,13 @@ int shell_ls(char** tokens) {
         printf("\n");
     } else {
         if (strcmp(tokens[tokenCount], "-m") == 0 ) {
+            char cwd[1024];
             char *curr_dir = NULL;
             DIR *dp = NULL;
             struct dirent *dptr = NULL;
             unsigned int count = 0;
 
-            curr_dir = getenv("PWD");
+            curr_dir = getcwd(cwd, sizeof(cwd));
             if (NULL == curr_dir) {
                 perror("\n ERROR : Could not get the working directory\n");
             }
@@ -614,6 +617,7 @@ int shell_cd(char** tokens) {
     if (tokens[1] == NULL) {
         cout << "mi_sh: \"cd\" missing argument." << endl;
     } else {
+
         if (chdir(tokens[1]) != 0) {
             perror("mi_sh");
         }
@@ -651,7 +655,7 @@ int shell_chmod(char** tokens) {
 int shell_rmdir(char** tokens) {
 
     if (tokens[1] == NULL) {
-        cout << "mi_sh: argumento esperado para \"rmdir\"" << endl;
+        cout << "mi_sh: \"rmdir\" missing argument.\n" << endl;
     } else {
         if (rmdir(tokens[1]) != 0) {
             perror("mi_sh");
@@ -674,6 +678,17 @@ int shell_rm(char** tokens) {
                 perror("mi_sh");
             }
 
+        } else {
+            if (strcmp(tokens[1], "-R") == 0) {
+                char* directory = tokens[tokenCount];
+                if (!directory) perror("rm -R missing argument. \n");
+                else {
+                    int ret;
+                    char *path_dir = (char *) malloc((500 * sizeof(char *)));
+                    strcpy(path_dir, directory);
+                    ret = removedir(path_dir);
+                }
+            }
         }
     }
     return 1;
@@ -693,13 +708,13 @@ int shell_cat(char** tokens) {
                 char line[100];
                 file = fopen(tokens[tokenCount], "r");
                 while (fscanf(file, "%[^\n]\n", line) != EOF) {
-                    
+
                     printf("%s\n", line);
                 }
                 fclose(file);
                 tokenCount++;
             }
-            
+
             i++;
             controlador++;
         } while (tokens[tokenCount] != NULL);
