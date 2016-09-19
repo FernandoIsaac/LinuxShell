@@ -40,6 +40,10 @@
 #include <unistd.h>
 #endif
 
+#define MAX_LENGTH 1024
+#define DELIMS " \t\r\n"
+
+
 #define MAX_BUF 1024
 #define INT_SIZE_BUF 6
 #define PID_LIST_BLOCK 32
@@ -703,9 +707,9 @@ int shell_cat(char** tokens) {
         int controlador = 0;
         int tokenCount = 1;
         int i = 0;
-        printf("%s \n", tokens[tokenCount]);
+        //printf("%s \n", tokens[tokenCount]);
         do {
-            if (controlador == 0 || tokens[tokenCount][i] == ' ') {
+            if (controlador == 0 || tokens[tokenCount][i] == 0) {
                 FILE *file;
                 char line[100];
                 file = fopen(tokens[tokenCount], "r");
@@ -714,7 +718,9 @@ int shell_cat(char** tokens) {
                     printf("%s\n", line);
                 }
                 fclose(file);
-                tokenCount++;
+		tokenCount++;
+		//tokens[tokenCount] = strtok(NULL, DELIMS);
+		i=0;
             }
 
             i++;
