@@ -29,6 +29,7 @@
 #include <sys/procfs.h>
 #include <libgen.h>
 #include <pwd.h>
+#include <fstream>
 #include <sys/utsname.h>
 #include <math.h>
 #include <signal.h>
@@ -299,7 +300,7 @@ int removedir(char path[500]) {
 
 
 char pathname[MAXPATHLEN];
-char const *builtin_str[] = {"ls", "cd", "mkdir", "chmod", "rmdir", "rm", "cat","uname", "kill", "ln", "ps",  "help", "exit"};
+char const *builtin_str[] = {"ls", "cd", "mkdir", "chmod", "rmdir", "rm", "cat", "uname", "kill", "ln", "ps",  "help", "exit"};
 int (*builtin_func[])(char**) = {
     &shell_ls,
     &shell_cd,
@@ -704,28 +705,49 @@ int shell_cat(char** tokens) {
         perror("\"cat\" missing argument.\n");
 
     } else {
-        int controlador = 0;
-        int tokenCount = 1;
-        int i = 0;
-        //printf("%s \n", tokens[tokenCount]);
-        do {
-            if (controlador == 0 || tokens[tokenCount][i] == 0) {
-                FILE *file;
-                char line[100];
-                file = fopen(tokens[tokenCount], "r");
-                while (fscanf(file, "%[^\n]\n", line) != EOF) {
+        if (strcmp(tokens[1], ">") == 0) {
+            if (tokens[2]== NULL) {
+                perror("\"cat\" missing argument.\n");
+            } else {
+                char *line;
+                size_t buffer_size;
+                line = NULL;
+                buffer_size = 0;
+                string str;
+                
+                ofstream file(tokens[2]);
+                do {
+                    getline(cin, str);
+                    file  << str << "\n";
+                }while(!cin.eof());
+               
+                
 
-                    printf("%s\n", line);
-                }
-                fclose(file);
-		tokenCount++;
-		//tokens[tokenCount] = strtok(NULL, DELIMS);
-		i=0;
             }
+        } else {
+            int controlador = 0;
+            int tokenCount = 1;
+            int i = 0;
 
-            i++;
-            controlador++;
-        } while (tokens[tokenCount] != NULL);
+            do {
+                if (controlador == 0 || tokens[tokenCount][i] == 0) {
+                    FILE *file;
+                    char line[100];
+                    file = fopen(tokens[tokenCount], "r");
+                    while (fscanf(file, "%[^\n]\n", line) != EOF) {
+
+                        printf("%s\n", line);
+                    }
+                    fclose(file);
+                    tokenCount++;
+                    i = 0;
+                }
+
+                i++;
+                controlador++;
+            } while (tokens[tokenCount] != NULL);
+        }
+
     }
     return 1;
 }
@@ -818,7 +840,7 @@ int shell_uname(char** tokens) {
 }
 int shell_kill(char** tokens) {
     int tokenCount = 0 ;
-    
+
     while (tokens[tokenCount] != NULL) {
         tokenCount++;
     }
@@ -826,7 +848,7 @@ int shell_kill(char** tokens) {
     if (tokenCount != 2) {
         perror("\"kill\" missing arguments\n");
     } else {
-       
+
         kill(atoi(tokens[tokenCount]), 9);
     }
     return 1;
